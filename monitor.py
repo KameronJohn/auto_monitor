@@ -283,17 +283,22 @@ def main():
     # Check for changes
     if current != previous:
 
-        print("\n🚨 VOLLEYBALL EVENT UPDATED!")
+        send_discord_message(
+                    1,"\n🚨 VOLLEYBALL EVENT UPDATED!")
 
         if current["title"] != previous["title"]:
 
-            print("Previous title:", previous["title"])
-            print("Current title: ", current["title"])
+            send_discord_message(
+                        1,"Previous title:", previous["title"])
+            send_discord_message(save_alert_state
+                        1,"Current title: ", current["title"])
 
         if current["url"] != previous["url"]:
 
-            print("Previous URL:", previous["url"])
-            print("Current URL: ", current["url"])
+            send_discord_message(
+                        1,"Previous URL:", previous["url"])
+            send_discord_message(
+                        1,"Current URL: ", current["url"])
 
         save_state(current)
 
