@@ -199,6 +199,7 @@ def fetch_volleyball_event():
             and TARGET_TIME.lower().replace(" ", "")
                 in normalized_title.replace(" ", "")
         ):
+            print('halo')
             notify_event_recovered()
             return {
                 "title": title,
