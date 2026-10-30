@@ -14,6 +14,7 @@ URL = "https://linktr.ee/torontohkyouth"
 STATE_FILE = Path(__file__).resolve().parent / "volleyball_state.json"
 
 TARGET_PREFIX = "排球 🏐"
+TARGET_PREFIX = "GAKI"
 TARGET_DAY = "Wed"
 TARGET_TIME = "6-8 pm"
 
