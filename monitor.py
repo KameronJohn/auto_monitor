@@ -14,9 +14,11 @@ URL = "https://linktr.ee/torontohkyouth"
 STATE_FILE = Path(__file__).resolve().parent / "volleyball_state.json"
 
 TARGET_PREFIX = "排球 🏐"
-TARGET_PREFIX = "GAKI"
 TARGET_DAY = "Wed"
 TARGET_TIME = "6-8 pm"
+ALERT_STATE_FILE = (
+    Path(__file__).resolve().parent / "event_alert_state.json"
+)
 
 
 import os
@@ -75,6 +77,81 @@ def send_discord_message(channel, message):
         print(f"Discord connection error: {error}")
         return False
 
+
+
+def load_alert_state():
+    """Load whether a missing-event alert has already been sent."""
+
+    if not ALERT_STATE_FILE.exists():
+        return False
+
+    try:
+        with ALERT_STATE_FILE.open("r", encoding="utf-8") as file:
+            state = json.load(file)
+
+        return state.get("event_missing_alert_sent", False)
+
+    except (json.JSONDecodeError, OSError):
+        return False
+
+
+def save_alert_state(alert_sent):
+    """Save the missing-event alert status."""
+
+    with ALERT_STATE_FILE.open("w", encoding="utf-8") as file:
+        json.dump(
+            {"event_missing_alert_sent": alert_sent},
+            file,
+            indent=2
+        )
+
+def notify_event_missing_once():
+
+    already_alerted = load_alert_state()
+
+    # Channel 2: Log every failed check
+    send_discord_message(
+        2,
+        "⚠️ Wednesday 6–8 PM event not found during this check."
+    )
+
+    # Channel 1: Send only the first alert
+    if not already_alerted:
+
+        success = send_discord_message(
+            1,
+            "🚨 **VOLLEYBALL EVENT NOT FOUND**\n\n"
+            "The Wednesday 6–8 PM volleyball event could not be found.\n\n"
+            "Possible reasons:\n"
+            "• Event title has changed\n"
+            "• Event has been removed\n"
+            "• Linktree page structure has changed\n\n"
+            "Check the page:\n"
+            "https://linktr.ee/torontohkyouth"
+        )
+
+        # Save status only if Discord successfully received the alert
+        if success:
+            save_alert_state(True)
+
+
+def notify_event_recovered():
+
+    already_alerted = load_alert_state()
+
+    if already_alerted:
+
+        success = send_discord_message(
+            1,
+            "✅ **VOLLEYBALL EVENT RESTORED**\n\n"
+            "The Wednesday 6–8 PM volleyball event is available again.\n"
+            "Monitoring has resumed normally."
+        )
+
+        if success:
+            save_alert_state(False)
+
+
 # ==========================================
 # FETCH TARGET EVENT
 # ==========================================
@@ -122,13 +199,11 @@ def fetch_volleyball_event():
             and TARGET_TIME.lower().replace(" ", "")
                 in normalized_title.replace(" ", "")
         ):
-            send_discord_message(1, "new event found")
+            notify_event_recovered()
             return {
                 "title": title,
                 "url": link.get("href", "")
             }
-        else:
-            send_discord_message(2, "no updates found")
 
     # Event not found: send Discord notification
     send_discord_message(2,
