@@ -80,18 +80,41 @@ def send_discord_message(channel, message):
 
 
 def load_alert_state():
-    """Load whether a missing-event alert has already been sent."""
+    """
+    Load the missing-event alert status.
 
+    If the state file doesn't exist, create it with the default value False.
+    """
+
+    # Check whether event_alert_state.json exists
     if not ALERT_STATE_FILE.exists():
+
+        # File doesn't exist, so create it and set alert status to False
+        # False means no missing-event alert has been sent yet
+        save_alert_state(False)
+
+        # Return False so the program knows an alert hasn't been sent
         return False
 
     try:
+        # Open the existing JSON file in read mode ("r")
         with ALERT_STATE_FILE.open("r", encoding="utf-8") as file:
+
+            # Read the JSON content and convert it into a Python dictionary
             state = json.load(file)
 
+        # Retrieve the alert status from the dictionary
+        # If the key doesn't exist, use False as the default value
         return state.get("event_missing_alert_sent", False)
 
     except (json.JSONDecodeError, OSError):
+
+        # JSONDecodeError: The file exists but contains invalid JSON
+        # OSError: The file cannot be opened or read
+        # Reset the alert status to False to allow a new alert
+        save_alert_state(False)
+
+        # Tell the program that no alert has been sent
         return False
 
 
@@ -135,21 +158,36 @@ def notify_event_missing_once():
             save_alert_state(True)
 
 
-def notify_event_recovered():
+def notify_event_recovered(prog_ran_successfully):
 
     already_alerted = load_alert_state()
-
-    if already_alerted:
-
-        success = send_discord_message(
-            1,
-            "✅ **VOLLEYBALL EVENT RESTORED**\n\n"
-            "The Wednesday 6–8 PM volleyball event is available again.\n"
-            "Monitoring has resumed normally."
-        )
-
-        if success:
-            save_alert_state(False)
+    msg = (
+        "🚨 **VOLLEYBALL EVENT NOT FOUND**\n\n"
+        "The Wednesday 6–8 PM volleyball event could not be found.\n\n"
+        "Possible reasons:\n"
+        "• Event title has changed\n"
+        "• Event has been removed\n"
+        "• Linktree page structure has changed\n\n"
+        "Check the page:\n"
+        "https://linktr.ee/torontohkyouth"
+    )
+    print('halo')
+    # Check whether a missing-event alert was previously sent
+    if prog_ran_successfully:
+        save_alert_state(False)
+        if already_alerted:
+            send_discord_message(
+                1,
+                "✅ **VOLLEYBALL EVENT RESTORED**\n\n"
+                "Monitoring has resumed normally."
+            )
+    if not prog_ran_successfully:
+        if already_alerted:
+            send_discord_message(2,msg)
+            return
+        else:
+            send_discord_message(1,msg)
+            save_alert_state(True)
 
 
 # ==========================================
@@ -199,26 +237,14 @@ def fetch_volleyball_event():
             and TARGET_TIME.lower().replace(" ", "")
                 in normalized_title.replace(" ", "")
         ):
-            print('halo')
-            notify_event_recovered()
+            notify_event_recovered(True)
             return {
                 "title": title,
                 "url": link.get("href", "")
             }
 
-    # Event not found: send Discord notification
-    send_discord_message(2,
-        "🚨 **VOLLEYBALL EVENT NOT FOUND**\n\n"
-        "The Wednesday 6–8 PM volleyball event could not be found.\n\n"
-        "Possible reasons:\n"
-        "• Event title has changed\n"
-        "• Event has been removed\n"
-        "• Linktree page structure has changed\n\n"
-        "Check the page:\n"
-        "https://linktr.ee/torontohkyouth"
-    )
 
-    raise RuntimeError(
+    raise RuntimeError(notify_event_recovered(False),
         "Wednesday 6-8 PM volleyball event not found. "
         "The title may have changed or the event may have been removed."
     )
@@ -283,28 +309,22 @@ def main():
     # Check for changes
     if current != previous:
 
-        send_discord_message(
-                    1,"\n🚨 VOLLEYBALL EVENT UPDATED!")
+        send_discord_message(1,"\n🚨 VOLLEYBALL EVENT UPDATED!")
 
         if current["title"] != previous["title"]:
 
-            send_discord_message(
-                        1,"Previous title:", previous["title"])
-            send_discord_message(save_alert_state
-                        1,"Current title: ", current["title"])
+            send_discord_message(1,f"Previous title: {previous['title']}")
+            send_discord_message(1,f"Current title: {current['title']}")
 
         if current["url"] != previous["url"]:
 
-            send_discord_message(
-                        1,"Previous URL:", previous["url"])
-            send_discord_message(
-                        1,"Current URL: ", current["url"])
+            send_discord_message(1,f"Current URL: {current['url']}")
 
         save_state(current)
 
     else:
 
-        print("\nNo changes detected.")
+        send_discord_message(2,"No changes detected.")
 
 
 # ==========================================
