@@ -328,6 +328,7 @@ def main():
     else:
 
         send_discord_message(2,"No changes detected.")
+        send_discord_message(2,datetime.datetime.now().strftime("%Y-%m-%d"))
 
 
 # ==========================================
@@ -335,7 +336,6 @@ def main():
 # ==========================================
 
 if __name__ == "__main__":
-    print(datetime.datetime.now().strftime("%Y-%m-%d"))
     exit()
     try:
         exit()
