@@ -335,9 +335,9 @@ def main():
 # ==========================================
 
 if __name__ == "__main__":
+    print(datetime.datetime.now().strftime("%Y-%m-%d"))
     exit()
     try:
-        print(datetime.datetime.now().strftime("%Y-%m-%d"))
         exit()
         main()
     except Exception as error:
