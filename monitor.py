@@ -3,6 +3,7 @@ from pathlib import Path
 
 import requests
 from bs4 import BeautifulSoup
+import datetime
 
 # ==========================================
 # CONFIGURATION
@@ -319,6 +320,8 @@ def main():
         if current["url"] != previous["url"]:
 
             send_discord_message(1,f"Current URL: {current['url']}")
+            send_discord_message(1,"Today's date:")
+            send_discord_message(1,datetime.datetime.now().strftime("%Y-%m-%d"))
 
         save_state(current)
 
@@ -332,10 +335,11 @@ def main():
 # ==========================================
 
 if __name__ == "__main__":
-
+    exit()
     try:
+        print(datetime.datetime.now().strftime("%Y-%m-%d"))
+        exit()
         main()
-
     except Exception as error:
 
         print("Monitoring error:", error)
