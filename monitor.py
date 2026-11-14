@@ -335,8 +335,6 @@ def main():
 # ==========================================
 
 if __name__ == "__main__":
-    send_discord_message(1,datetime.datetime.now().strftime("%Y-%m-%d"))
-    exit()
     try:
         main()
     except Exception as error:
